@@ -48,8 +48,11 @@ func (b *Btree) Delete(key []byte) bool {
 	b.lock.Lock()
 	bitem := b.tree.Delete(item)
 	b.lock.Unlock()
-	if bitem == nil {
-		return false
-	}
-	return true
+
+	// if bitem == nil {
+	// 	return false
+	// }
+	// return true
+
+	return bitem != nil
 }
