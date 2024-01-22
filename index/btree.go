@@ -13,6 +13,13 @@ type Btree struct {
 	lock *sync.RWMutex // 并发要自己上锁
 }
 
+func NewBtree() *Btree {
+	return &Btree{
+		tree: btree.New(32),
+		lock: new(sync.RWMutex),
+	}
+}
+
 func (b *Btree) Put(key []byte, pos *data.LogRecordPos) bool {
 	item := Item{
 		key: key,
@@ -40,9 +47,9 @@ func (b *Btree) Delete(key []byte) bool {
 	}
 	b.lock.Lock()
 	bitem := b.tree.Delete(item)
+	b.lock.Unlock()
 	if bitem == nil {
 		return false
 	}
-	b.lock.Unlock()
 	return true
 }
