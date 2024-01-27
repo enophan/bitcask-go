@@ -10,7 +10,7 @@ import (
 // Btree 索引
 type Btree struct {
 	tree *btree.BTree
-	lock *sync.RWMutex // 并发要自己上锁
+	lock *sync.RWMutex // 并发要自己上锁，google/btree不提供
 }
 
 func NewBtree() *Btree {
