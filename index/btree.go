@@ -21,12 +21,12 @@ func NewBtree() *Btree {
 }
 
 func (b *Btree) Put(key []byte, pos *data.LogRecordPos) bool {
-	item := Item{
+	item := &Item{
 		key: key,
 		pos: pos,
 	}
 	b.lock.Lock()
-	b.tree.ReplaceOrInsert(&item)
+	b.tree.ReplaceOrInsert(item)
 	b.lock.Unlock()
 	return true
 }
