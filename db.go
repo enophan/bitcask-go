@@ -1,8 +1,14 @@
 package bitcask_go
 
 import (
+	"errors"
 	"hutuodb/data"
 	"hutuodb/index"
+	"io"
+	"os"
+	"sort"
+	"strconv"
+	"strings"
 	"sync"
 )
 
@@ -14,6 +20,41 @@ type DB struct {
 	olderFile  map[uint32]*data.DataFile
 	options    Options
 	index      index.Indexer
+	fileIds    []int // 仅用于加载索引
+}
+
+func Open(options Options) (*DB, error) {
+	// 配置项检验
+	// 加载数据文件
+	// 加载索引信息
+
+	if err := chekOptions(options); err != nil {
+		return nil, err
+	}
+
+	if _, err := os.Stat(options.DirPath); os.IsNotExist(err) {
+		if err := os.MkdirAll(options.DirPath, os.ModePerm); err != nil {
+			return nil, err
+		}
+	}
+
+	db := &DB{
+		mu:        new(sync.RWMutex),
+		olderFile: make(map[uint32]*data.DataFile),
+		options:   options,
+		index:     index.NewIndexer(options.IndexType),
+	}
+
+	if err := db.loadDataFiles(); err != nil {
+		return nil, err
+	}
+
+	if err := db.loadIndexFromDataFiles(); err != nil {
+		return nil, err
+	}
+
+	return db, nil
+
 }
 
 func (db *DB) Put(key []byte, value []byte) error {
@@ -65,7 +106,7 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 		return nil, ErrDataFileNotFound
 	}
 
-	logRecord, err := dataFile.ReadLogRecord(logRecordPos.Offset)
+	logRecord, _, err := dataFile.ReadLogRecord(logRecordPos.Offset)
 	if err != nil {
 		return nil, err
 	}
@@ -144,6 +185,107 @@ func (db *DB) setActiveFile() error {
 	}
 
 	db.activeFile = dataFile
+
+	return nil
+}
+
+func (db *DB) loadDataFiles() error {
+	// 读取目录中的所有合法文件，即 .data 文件
+	// 得到活跃文件和旧数据文件
+	// 把文件id存好，一会加载至内存索引中
+	dirEntries, err := os.ReadDir(db.options.DirPath)
+	if err != nil {
+		return err
+	}
+
+	var fileIds []int
+
+	for _, entry := range dirEntries {
+		if strings.HasSuffix(entry.Name(), data.DataFileNameSuffix) {
+			splitNames := strings.Split(entry.Name(), ".")
+			fileId, err := strconv.Atoi(splitNames[0])
+			if err != nil {
+				return nil
+			}
+			fileIds = append(fileIds, fileId)
+		}
+	}
+
+	sort.Ints(fileIds)
+	db.fileIds = fileIds
+
+	for i, fid := range fileIds {
+		dataFile, err := data.OpeanDataFile(db.options.DirPath, uint32(fid))
+		if err != nil {
+			return nil
+		}
+		if i == len(fileIds)-1 {
+			db.activeFile = dataFile
+		} else {
+			db.olderFile[uint32(fid)] = dataFile
+		}
+	}
+
+	return nil
+}
+
+func (db *DB) loadIndexFromDataFiles() error {
+	// 首先检验有没有datafile，空数据库当然不需要索引
+	// 读每个文件里的每条数据，把数据与状态信息记录进索引中
+	if len(db.fileIds) == 0 {
+		return nil
+	}
+
+	for i, fid := range db.fileIds {
+		var fileId = uint32(fid)
+		var dataFile *data.DataFile
+		if fileId == db.activeFile.FileId {
+			dataFile = db.activeFile
+		} else {
+			dataFile = db.olderFile[fileId]
+		}
+
+		var offset int64 = 0
+		for {
+			logRecord, size, err := dataFile.ReadLogRecord(offset)
+			if err != nil {
+				if err == io.EOF {
+					break
+				}
+
+				return err
+			}
+
+			logRecordPos := &data.LogRecordPos{
+				Fid:    fileId,
+				Offset: offset,
+			}
+
+			if logRecord.Type == data.LogRecordNormal {
+				db.index.Put(logRecord.Key, logRecordPos)
+			} else {
+				db.index.Delete(logRecord.Key)
+			}
+
+			offset += size
+
+		}
+
+		if i == len(db.fileIds)-1 {
+			db.activeFile.WOffset = offset
+		}
+	}
+	return nil
+}
+
+func chekOptions(o Options) error {
+	if o.DirPath == "" {
+		return errors.New("DirPath 未配置")
+	}
+
+	if o.DataFileSize <= 0 {
+		return errors.New("DataFileSize 配置错误")
+	}
 
 	return nil
 }
