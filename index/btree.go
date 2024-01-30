@@ -7,20 +7,20 @@ import (
 	"github.com/google/btree"
 )
 
-// Btree 索引
-type Btree struct {
+// BTree 索引
+type BTree struct {
 	tree *btree.BTree
 	lock *sync.RWMutex // 并发要自己上锁，google/btree不提供
 }
 
-func NewBtree() *Btree {
-	return &Btree{
+func NewBtree() *BTree {
+	return &BTree{
 		tree: btree.New(32),
 		lock: new(sync.RWMutex),
 	}
 }
 
-func (b *Btree) Put(key []byte, pos *data.LogRecordPos) bool {
+func (b *BTree) Put(key []byte, pos *data.LogRecordPos) bool {
 	item := &Item{
 		key: key,
 		pos: pos,
@@ -30,7 +30,7 @@ func (b *Btree) Put(key []byte, pos *data.LogRecordPos) bool {
 	b.lock.Unlock()
 	return true
 }
-func (b *Btree) Get(key []byte) *data.LogRecordPos {
+func (b *BTree) Get(key []byte) *data.LogRecordPos {
 	item := &Item{
 		key: key,
 	}
@@ -41,7 +41,7 @@ func (b *Btree) Get(key []byte) *data.LogRecordPos {
 
 	return bitem.(*Item).pos
 }
-func (b *Btree) Delete(key []byte) bool {
+func (b *BTree) Delete(key []byte) bool {
 	item := &Item{
 		key: key,
 	}
