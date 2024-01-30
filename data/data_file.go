@@ -4,7 +4,7 @@ import "hutuodb/fio"
 
 type DataFile struct {
 	FileId    uint32
-	WOffset   int64
+	WOffset   int64 // 从文件哪个地方开始写的偏移量
 	IOManager fio.IOManager
 }
 
