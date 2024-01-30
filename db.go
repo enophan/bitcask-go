@@ -115,6 +115,33 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 
 }
 
+func (db *DB) Delete(key []byte) error {
+	// 和put一样的逻辑
+
+	if len(key) == 0 {
+		return ErrKeyIsEmpty
+	}
+
+	if pos := db.index.Get(key); pos == nil {
+		return nil
+	}
+
+	logRecord := &data.LogRecord{
+		Key:  key,
+		Type: data.LogRecordDelete,
+	}
+
+	_, err := db.appendLogRecord(logRecord)
+	if err != nil {
+		return nil
+	}
+
+	if ok := db.index.Delete(key); !ok {
+		return ErrIndexUpdateFailed
+	}
+	return nil
+}
+
 // appendLogRecord 数据写入活跃文件，返回地址信息
 func (db *DB) appendLogRecord(logRecord *data.LogRecord) (*data.LogRecordPos, error) {
 	// 若未初始化活跃文件，则新建
