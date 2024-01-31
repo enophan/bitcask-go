@@ -288,10 +288,14 @@ func (db *DB) loadIndexFromDataFiles() error {
 				Offset: offset,
 			}
 
+			var ok bool
 			if logRecord.Type == data.LogRecordNormal {
-				db.index.Put(logRecord.Key, logRecordPos)
+				ok = db.index.Put(logRecord.Key, logRecordPos)
 			} else {
-				db.index.Delete(logRecord.Key)
+				ok = db.index.Delete(logRecord.Key)
+			}
+			if !ok {
+				return ErrKeyIsEmpty
 			}
 
 			offset += size
