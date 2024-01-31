@@ -24,7 +24,7 @@ type DB struct {
 }
 
 func Open(options Options) (*DB, error) {
-	// 配置项检验
+	// 检验配置项有无
 	// 加载数据文件
 	// 加载索引信息
 
@@ -58,6 +58,7 @@ func Open(options Options) (*DB, error) {
 }
 
 func (db *DB) Put(key []byte, value []byte) error {
+	// 添加索引，更新索引
 	if len(key) == 0 {
 		return ErrKeyIsEmpty
 	}
@@ -116,7 +117,7 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 }
 
 func (db *DB) Delete(key []byte) error {
-	// 和put一样的逻辑
+	// 和put一样的逻辑，不过是没有value
 
 	if len(key) == 0 {
 		return ErrKeyIsEmpty
@@ -206,7 +207,7 @@ func (db *DB) setActiveFile() error {
 	}
 
 	// 打开数据文件
-	dataFile, err := data.OpeanDataFile(db.options.DirPath, initFileId)
+	dataFile, err := data.OpenDataFile(db.options.DirPath, initFileId)
 	if err != nil {
 		return err
 	}
@@ -242,7 +243,7 @@ func (db *DB) loadDataFiles() error {
 	db.fileIds = fileIds
 
 	for i, fid := range fileIds {
-		dataFile, err := data.OpeanDataFile(db.options.DirPath, uint32(fid))
+		dataFile, err := data.OpenDataFile(db.options.DirPath, uint32(fid))
 		if err != nil {
 			return nil
 		}
