@@ -21,7 +21,7 @@ var DataFileNameSuffix string = ".data"
 func OpenDataFile(dirPath string, fileId uint32) (*DataFile, error) {
 	// 组合出完整的文件路径及名称
 	// 然后打开文件 -> NewIOManager
-	file := filepath.Join(dirPath) + fmt.Sprintf("%09d", fileId) + DataFileNameSuffix
+	file := filepath.Join(dirPath, fmt.Sprintf("%09d", fileId)+DataFileNameSuffix)
 	ioManager, err := fio.NewIOManager(file)
 	if err != nil {
 		return nil, err
