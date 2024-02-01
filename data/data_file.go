@@ -39,7 +39,7 @@ func (df *DataFile) ReadLogRecord(offset int64) (*LogRecord, int64, error) {
 	// 解码header -> decodeLogRecordHeader
 	// 解码后若发现此位置（offset）为数据末尾，则退出
 	// 取出logRecord中的key与value -> readNBytes
-	// 校验其有效性（crc）
+	// 校验其有效性（crc） todo 怎么校验的？在校验什么？
 
 	// todo ?
 	fileSize, err := df.IOManager.Size()
@@ -82,7 +82,7 @@ func (df *DataFile) ReadLogRecord(offset int64) (*LogRecord, int64, error) {
 
 	crc := getLogRecordCRC(logRecord, headerBuf[crc32.Size:headerSize])
 	if crc != header.crc {
-		return nil, 0, errors.New("校验错误")
+		return nil, 0, errors.New("crc校验错误")
 	}
 	return logRecord, recordSize, nil
 }
