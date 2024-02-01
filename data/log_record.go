@@ -36,11 +36,10 @@ type LogRecordHeader struct {
 }
 
 // EncodeLogRecord 返回编码后的数组与其长度
-// +-----+------------+---------+-----------+-----+-------+
-// | crc | recordType | keySize | valueSize | key | value |
-// +-----+------------+---------+-----------+-----+-------+
 //
-//	4        1        max: 5     max: 5     var    var
+// |   crc   |  recordType  |  keySize  |  valueSize  |  key  |  value  |
+//
+//	4            1          max: 5     max: 5        var      var
 func EncodeLogRecord(logRecord *LogRecord) ([]byte, int64) {
 	// 先对头部信息（keySize&valueSize）二进制编码（recordType,key和value已经是二进制了） -> binary.PutVarint
 	// 作为校验选项，crc需要最后写入
