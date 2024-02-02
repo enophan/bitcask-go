@@ -1,7 +1,7 @@
 package index
 
 import (
-	"hutuodb/data"
+	"bitcask/data"
 	"testing"
 
 	"github.com/stretchr/testify/assert"

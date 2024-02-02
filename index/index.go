@@ -1,8 +1,8 @@
 package index
 
 import (
+	"bitcask/data"
 	"bytes"
-	"hutuodb/data"
 
 	"github.com/google/btree"
 )

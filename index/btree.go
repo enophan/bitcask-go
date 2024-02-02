@@ -1,7 +1,7 @@
 package index
 
 import (
-	"hutuodb/data"
+	"bitcask/data"
 	"sync"
 
 	"github.com/google/btree"
