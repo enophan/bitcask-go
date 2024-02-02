@@ -71,7 +71,7 @@ func EncodeLogRecord(logRecord *LogRecord) ([]byte, int64) {
 }
 
 // decodeLogRecordHeader 解LogRecordHeader的码。
-// 参数为LogRecord的header部分，返回解码后的LogRecordHeader地址
+// 参数为LogRecord的header部分，返回解码后的LogRecordHeader地址及其长度
 func decodeLogRecordHeader(headerbuf []byte) (*LogRecordHeader, int64) {
 	// 先检验数据是否正常，不然直接解出的码肯定也是错的
 	// 二进制解码keySize与valueSize
