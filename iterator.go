@@ -11,7 +11,7 @@ type Iterator struct {
 	options       IteratorOptions
 }
 
-func (db *DB) NewIndexer(opts IteratorOptions) *Iterator {
+func (db *DB) NewIterator(opts IteratorOptions) *Iterator {
 	indexIter := db.index.Iterator(opts.Reverse)
 	return &Iterator{
 		indexIterator: indexIter,
