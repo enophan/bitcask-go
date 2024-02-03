@@ -127,6 +127,14 @@ func (db *DB) Delete(key []byte) error {
 	return nil
 }
 
+// ListKey TODO
+
+// Fold TODO
+
+// Sync TODO
+
+// Close TODO
+
 // getValueByPostion 如函数名所说
 func (db *DB) getValueByPostion(pos *data.LogRecordPos) ([]byte, error) {
 	var dataFile *data.DataFile
