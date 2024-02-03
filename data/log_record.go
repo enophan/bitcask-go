@@ -5,6 +5,7 @@ import (
 	"hash/crc32"
 )
 
+// LogRecordPos 定义logRecord在哪个文件的哪个地方
 type LogRecordPos struct {
 	Fid    uint32 // 数据文件的文件id。文件名 int64 可能比较大，比较浪费 int32 比较合理
 	Offset int64  // 存储值在这一条目中的偏移位置
