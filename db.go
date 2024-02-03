@@ -127,13 +127,69 @@ func (db *DB) Delete(key []byte) error {
 	return nil
 }
 
-// ListKey TODO
+// ListKeys 获取数据库中所有的 key
+func (db *DB) ListKeys() [][]byte {
+	i := db.index.Iterator(false)
+	keys := make([][]byte, db.index.Size())
+	var index int
+	for i.Rewind(); i.Valid(); i.Next() {
+		keys[index] = i.Key()
+	}
+	return keys
+}
 
-// Fold TODO
+// Fold 遍历所有数据，并执行用户指定的操作，用户操作返回 false 时退出
+func (db *DB) Fold(f func(key []byte, value []byte) bool) error {
+	db.mu.Lock()
+	defer db.mu.RUnlock()
+
+	i := db.index.Iterator(false)
+	for i.Rewind(); i.Valid(); i.Next() {
+		value, err := db.getValueByPostion(i.Value())
+		if err != nil {
+			return err
+		}
+		if ok := f(i.Key(), value); !ok {
+			break
+		}
+	}
+
+	return nil
+}
 
 // Sync TODO
+func (db *DB) Sync() error {
+	if db.activeFile == nil {
+		return nil
+	}
+	db.mu.Lock()
+	defer db.mu.Unlock()
 
-// Close TODO
+	return db.activeFile.Sync()
+}
+
+// Close 关闭数据库
+func (db *DB) Close() error {
+	// 关闭或与文件和旧数据文件
+
+	if db.activeFile == nil {
+		return nil
+	}
+	db.mu.Lock()
+	defer db.mu.Unlock()
+
+	if err := db.activeFile.Close(); err != nil {
+		return err
+	}
+
+	for _, file := range db.olderFiles {
+		if err := file.Close(); err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
 
 // getValueByPostion 如函数名所说
 func (db *DB) getValueByPostion(pos *data.LogRecordPos) ([]byte, error) {

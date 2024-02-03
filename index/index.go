@@ -12,6 +12,9 @@ type Indexer interface {
 	Get(key []byte) *data.LogRecordPos
 	Delete(key []byte) bool
 	Iterator(reverse bool) Iterator
+
+	// Size 索引中的数据量
+	Size() int
 }
 
 type Item struct {
