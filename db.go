@@ -17,7 +17,7 @@ import (
 type DB struct {
 	mu         *sync.RWMutex
 	activeFile *data.DataFile
-	olderFile  map[uint32]*data.DataFile
+	olderFiles map[uint32]*data.DataFile
 	options    Options
 	index      index.Indexer
 	fileIds    []int // 仅用于加载索引
@@ -39,10 +39,10 @@ func Open(options Options) (*DB, error) {
 	}
 
 	db := &DB{
-		mu:        new(sync.RWMutex),
-		olderFile: make(map[uint32]*data.DataFile),
-		options:   options,
-		index:     index.NewIndexer(options.IndexType),
+		mu:         new(sync.RWMutex),
+		olderFiles: make(map[uint32]*data.DataFile),
+		options:    options,
+		index:      index.NewIndexer(options.IndexType),
 	}
 
 	if err := db.loadDataFiles(); err != nil {
@@ -100,7 +100,7 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 	if db.activeFile.FileId == logRecordPos.Fid {
 		dataFile = db.activeFile
 	} else {
-		dataFile = db.olderFile[logRecordPos.Fid]
+		dataFile = db.olderFiles[logRecordPos.Fid]
 	}
 
 	if dataFile == nil {
@@ -173,7 +173,7 @@ func (db *DB) appendLogRecord(logRecord *data.LogRecord) (*data.LogRecordPos, er
 			return nil, err
 		}
 
-		db.olderFile[db.activeFile.FileId] = db.activeFile
+		db.olderFiles[db.activeFile.FileId] = db.activeFile
 
 		if err := db.setActiveFile(); err != nil {
 			return nil, err
@@ -250,7 +250,7 @@ func (db *DB) loadDataFiles() error {
 		if i == len(fileIds)-1 {
 			db.activeFile = dataFile
 		} else {
-			db.olderFile[uint32(fid)] = dataFile
+			db.olderFiles[uint32(fid)] = dataFile
 		}
 	}
 
@@ -270,7 +270,7 @@ func (db *DB) loadIndexFromDataFiles() error {
 		if fileId == db.activeFile.FileId {
 			dataFile = db.activeFile
 		} else {
-			dataFile = db.olderFile[fileId]
+			dataFile = db.olderFiles[fileId]
 		}
 
 		var offset int64 = 0
