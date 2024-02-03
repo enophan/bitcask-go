@@ -134,13 +134,14 @@ func (db *DB) ListKeys() [][]byte {
 	var index int
 	for i.Rewind(); i.Valid(); i.Next() {
 		keys[index] = i.Key()
+		index++
 	}
 	return keys
 }
 
 // Fold 遍历所有数据，并执行用户指定的操作，用户操作返回 false 时退出
 func (db *DB) Fold(f func(key []byte, value []byte) bool) error {
-	db.mu.Lock()
+	db.mu.RLock()
 	defer db.mu.RUnlock()
 
 	i := db.index.Iterator(false)
@@ -149,7 +150,7 @@ func (db *DB) Fold(f func(key []byte, value []byte) bool) error {
 		if err != nil {
 			return err
 		}
-		if ok := f(i.Key(), value); !ok {
+		if !f(i.Key(), value) {
 			break
 		}
 	}
