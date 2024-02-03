@@ -28,7 +28,7 @@ func Open(options Options) (*DB, error) {
 	// 加载数据文件
 	// 加载索引信息
 
-	if err := chekOptions(options); err != nil {
+	if err := checkOptions(options); err != nil {
 		return nil, err
 	}
 
@@ -96,23 +96,7 @@ func (db *DB) Get(key []byte) ([]byte, error) {
 		return nil, ErrKeyNotFound
 	}
 
-	var dataFile *data.DataFile
-	if db.activeFile.FileId == logRecordPos.Fid {
-		dataFile = db.activeFile
-	} else {
-		dataFile = db.olderFiles[logRecordPos.Fid]
-	}
-
-	if dataFile == nil {
-		return nil, ErrDataFileNotFound
-	}
-
-	logRecord, _, err := dataFile.ReadLogRecord(logRecordPos.Offset)
-	if err != nil {
-		return nil, err
-	}
-
-	return logRecord.Value, nil
+	return db.getValueByPostion(logRecordPos)
 
 }
 
@@ -141,6 +125,27 @@ func (db *DB) Delete(key []byte) error {
 		return ErrIndexUpdateFailed
 	}
 	return nil
+}
+
+// getValueByPostion 如函数名所说
+func (db *DB) getValueByPostion(pos *data.LogRecordPos) ([]byte, error) {
+	var dataFile *data.DataFile
+	if db.activeFile.FileId == pos.Fid {
+		dataFile = db.activeFile
+	} else {
+		dataFile = db.olderFiles[pos.Fid]
+	}
+
+	if dataFile == nil {
+		return nil, ErrDataFileNotFound
+	}
+
+	logRecord, _, err := dataFile.ReadLogRecord(pos.Offset)
+	if err != nil {
+		return nil, err
+	}
+
+	return logRecord.Value, nil
 }
 
 // appendLogRecord 数据写入活跃文件，返回地址信息
@@ -310,7 +315,7 @@ func (db *DB) loadIndexFromDataFiles() error {
 	return nil
 }
 
-func chekOptions(o Options) error {
+func checkOptions(o Options) error {
 	if o.DirPath == "" {
 		return errors.New("DirPath 未配置")
 	}

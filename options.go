@@ -11,6 +11,11 @@ type Options struct {
 
 type IndexType = int8
 
+type IteratorOptions struct {
+	Prefix  []byte // 遍历前缀为指定的key（？）
+	Reverse bool
+}
+
 // 目前所能支持的索引类型
 const (
 	Btree IndexType = iota + 1
@@ -23,4 +28,9 @@ var DefaultOptions = Options{
 	DataFileSize: 256 * 1024 * 1024,
 	SyncWrite:    false,
 	IndexType:    Btree,
+}
+
+var DefaultIteratorOptions = IteratorOptions{
+	Prefix:  nil,
+	Reverse: false,
 }
