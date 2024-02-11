@@ -1460,6 +1460,35 @@
       "originalText": "构造Indexer",
       "lineHeight": 1.15,
       "baseline": 18
+    },
+    {
+      "id": "eiy39P-_EH98IJCvEtKBz",
+      "type": "rectangle",
+      "x": 110.57196476625006,
+      "y": -76.60299173541839,
+      "width": 270,
+      "height": 115.33334350585938,
+      "angle": 0,
+      "strokeColor": "#1e1e1e",
+      "backgroundColor": "transparent",
+      "fillStyle": "solid",
+      "strokeWidth": 2,
+      "strokeStyle": "solid",
+      "roughness": 1,
+      "opacity": 100,
+      "groupIds": [],
+      "frameId": null,
+      "roundness": {
+        "type": 3
+      },
+      "seed": 1712617581,
+      "version": 29,
+      "versionNonce": 1171907309,
+      "isDeleted": false,
+      "boundElements": null,
+      "updated": 1707661191379,
+      "link": null,
+      "locked": false
     }
   ],
   "appState": {
