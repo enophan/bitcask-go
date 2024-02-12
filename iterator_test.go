@@ -9,7 +9,7 @@ import (
 )
 
 func TestDB_NewIterator(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-iterator-1")
 	opts.DirPath = dir
 	db, err := Open(opts)
@@ -23,7 +23,7 @@ func TestDB_NewIterator(t *testing.T) {
 }
 
 func TestDB_Iterator_One_Value(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-iterator-2")
 	opts.DirPath = dir
 	db, err := Open(opts)
@@ -45,7 +45,7 @@ func TestDB_Iterator_One_Value(t *testing.T) {
 }
 
 func TestDB_Iterator_Multi_Values(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-iterator-3")
 	opts.DirPath = dir
 	db, err := Open(opts)

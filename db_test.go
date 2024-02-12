@@ -21,7 +21,7 @@ func destroyDB(db *DB) {
 }
 
 func TestOpen(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go")
 	opts.DirPath = dir
 	db, err := Open(opts)
@@ -31,7 +31,7 @@ func TestOpen(t *testing.T) {
 }
 
 func TestDB_Put(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-put")
 	opts.DirPath = dir
 	opts.DataFileSize = 64 * 1024 * 1024
@@ -89,7 +89,7 @@ func TestDB_Put(t *testing.T) {
 }
 
 func TestDB_Get(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-get")
 	opts.DirPath = dir
 	opts.DataFileSize = 64 * 1024 * 1024
@@ -161,7 +161,7 @@ func TestDB_Get(t *testing.T) {
 }
 
 func TestDB_Delete(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-delete")
 	opts.DirPath = dir
 	opts.DataFileSize = 64 * 1024 * 1024
@@ -214,7 +214,7 @@ func TestDB_Delete(t *testing.T) {
 }
 
 func TestDB_ListKeys(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-list-keys")
 	opts.DirPath = dir
 	db, err := Open(opts)
@@ -249,7 +249,7 @@ func TestDB_ListKeys(t *testing.T) {
 }
 
 func TestDB_Fold(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-fold")
 	opts.DirPath = dir
 	db, err := Open(opts)
@@ -275,7 +275,7 @@ func TestDB_Fold(t *testing.T) {
 }
 
 func TestDB_Close(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-close")
 	opts.DirPath = dir
 	db, err := Open(opts)
@@ -288,7 +288,7 @@ func TestDB_Close(t *testing.T) {
 }
 
 func TestDB_Sync(t *testing.T) {
-	opts := DefaultOptions
+	opts := DefaultDBOptions
 	dir, _ := os.MkdirTemp("", "bitcask-go-sync")
 	opts.DirPath = dir
 	db, err := Open(opts)

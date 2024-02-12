@@ -16,6 +16,14 @@ type IteratorOptions struct {
 	Reverse bool
 }
 
+type WriteBatchOptions struct {
+	// 一批次提交的最大数据量
+	MaxBatchNum uint
+
+	// 提交事务时持久化与否
+	SyncWrite bool
+}
+
 // 目前所能支持的索引类型
 const (
 	Btree IndexType = iota + 1
@@ -23,7 +31,7 @@ const (
 	BPlusTree
 )
 
-var DefaultOptions = Options{
+var DefaultDBOptions = Options{
 	DirPath:      os.TempDir(),
 	DataFileSize: 256 * 1024 * 1024,
 	SyncWrite:    false,
@@ -33,4 +41,9 @@ var DefaultOptions = Options{
 var DefaultIteratorOptions = IteratorOptions{
 	Prefix:  nil,
 	Reverse: false,
+}
+
+var DefaultWriteBatchOptions = WriteBatchOptions{
+	MaxBatchNum: 10000,
+	SyncWrite:   true,
 }

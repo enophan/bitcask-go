@@ -19,7 +19,8 @@ const maxLogRecordHeaderSize = binary.MaxVarintLen32*2 + 5
 
 const (
 	LogRecordNormal LogRecordType = iota
-	LogRecordDelete
+	LogRecordDeleted
+	LogRecordTxnFinished
 )
 
 // LogRecord 写入到数据文件的记录
@@ -34,6 +35,11 @@ type LogRecordHeader struct {
 	recordType LogRecordType
 	keySize    uint32
 	valueSize  uint32
+}
+
+type TransactionRecord struct {
+	Record *LogRecord
+	Pos    *LogRecordPos
 }
 
 // EncodeLogRecord 返回编码后的数组与其长度
