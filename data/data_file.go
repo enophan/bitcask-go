@@ -9,20 +9,38 @@ import (
 	"path/filepath"
 )
 
+const (
+	DataFileNameSuffix    = ".data"
+	HintFileName          = "hint-index"
+	MergeFinishedFileName = "merge-finished"
+)
+
 type DataFile struct {
 	FileId    uint32
 	WOffset   int64 // 从文件哪个地方开始写的偏移量
 	IOManager fio.IOManager
 }
 
-var DataFileNameSuffix string = ".data"
-
 // OpenDataFile 根据目录，打开对应目的文件。返回目的数据文件地址、错误
 func OpenDataFile(dirPath string, fileId uint32) (*DataFile, error) {
 	// 组合出完整的文件路径及名称
 	// 然后打开文件 -> NewIOManager
-	file := filepath.Join(dirPath, fmt.Sprintf("%09d", fileId)+DataFileNameSuffix)
-	ioManager, err := fio.NewIOManager(file)
+	fileName := filepath.Join(dirPath, fmt.Sprintf("%09d", fileId)+DataFileNameSuffix)
+	return newDataFile(fileName, fileId)
+}
+
+func OpenHintFile(dirPath string) (*DataFile, error) {
+	fileName := filepath.Join(dirPath, HintFileName)
+	return newDataFile(fileName, 0)
+}
+
+func OpenMergeFinishedFile(dirPath string) (*DataFile, error) {
+	fileName := filepath.Join(dirPath, MergeFinishedFileName)
+	return newDataFile(fileName, 0)
+}
+
+func newDataFile(fileName string, fileId uint32) (*DataFile, error) {
+	ioManager, err := fio.NewIOManager(fileName)
 	if err != nil {
 		return nil, err
 	}
@@ -31,6 +49,11 @@ func OpenDataFile(dirPath string, fileId uint32) (*DataFile, error) {
 		WOffset:   0,
 		IOManager: ioManager,
 	}, nil
+}
+
+// <fileId>.data
+func GetDataFileName(dirPath string, fileId uint32) string {
+	return filepath.Join(dirPath, fmt.Sprintf("%09d", fileId)+DataFileNameSuffix)
 }
 
 // ReadLogRecord 从数据文件中某位置（offset）读取logRecord日志数据。返回目的数据的地址、目的数据的长度、错误
@@ -96,6 +119,15 @@ func (df *DataFile) Write(b []byte) error {
 	}
 	df.WOffset += int64(n)
 	return nil
+}
+
+func (df *DataFile) WriteHintRecord(key []byte, pos *LogRecordPos) error {
+	hintRecord := &LogRecord{
+		Key:   key,
+		Value: EncodeLogRecordPos(pos),
+	}
+	encRecord, _ := EncodeLogRecord(hintRecord)
+	return df.Write(encRecord)
 }
 
 func (df *DataFile) Sync() error {

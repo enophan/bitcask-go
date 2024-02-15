@@ -22,6 +22,7 @@ type DB struct {
 	index      index.Indexer
 	fileIds    []int  // 仅用于加载索引
 	seqNo      uint64 // 事务序列号
+	isMerging  bool
 }
 
 func Open(options Options) (*DB, error) {
@@ -46,7 +47,16 @@ func Open(options Options) (*DB, error) {
 		index:      index.NewIndexer(options.IndexType),
 	}
 
+	// 加载merge文件
+	if err := db.loadMergeFiles(); err != nil {
+		return nil, err
+	}
+
 	if err := db.loadDataFiles(); err != nil {
+		return nil, err
+	}
+
+	if err := db.loadIndexFromHintFile(); err != nil {
 		return nil, err
 	}
 
