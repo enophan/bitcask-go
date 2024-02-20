@@ -178,6 +178,10 @@ func (db *DB) loadMergeFiles() error {
 		if entry.Name() == data.MergeFinishedFileName {
 			mergeFinished = true
 		}
+		// 旧序列号文件丢掉就行
+		if entry.Name() == data.SeqNoFileName {
+			continue
+		}
 		fileNames = append(fileNames, entry.Name())
 	}
 	if !mergeFinished {

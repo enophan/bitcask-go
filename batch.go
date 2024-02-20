@@ -19,6 +19,10 @@ type WriteBatch struct {
 }
 
 func (db *DB) NewWriteBatch(opts WriteBatchOptions) *WriteBatch {
+	// db.isInitial 因为首次启动肯定是没有序列号文件的
+	if db.options.IndexType == BPlusTree && !db.seqFileExists && db.isInitial {
+		panic("由于序列号文件不存在，已禁止使用WrtiteBatch功能")
+	}
 	return &WriteBatch{
 		opts:           opts,
 		mu:             new(sync.Mutex),

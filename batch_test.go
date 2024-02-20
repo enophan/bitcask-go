@@ -57,7 +57,7 @@ func TestDB_WriteBatch2(t *testing.T) {
 	err = wb.Commit()
 	t.Log(err)
 
-	err = db.Put(utils.GetTestKey(12), utils.RandomValue(10))
+	_ = db.Put(utils.GetTestKey(12), utils.RandomValue(10))
 	val, err := db.Get(utils.GetTestKey(12))
 	t.Log(string(val))
 	t.Log(err)

@@ -58,6 +58,10 @@ func (art *AdaptiveRadixTree) Size() int {
 	return size
 }
 
+func (art *AdaptiveRadixTree) Close() error {
+	return nil
+}
+
 // Iterator 索引迭代器
 func (art *AdaptiveRadixTree) Iterator(reverse bool) Iterator {
 	art.lock.RLock()

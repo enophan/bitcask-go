@@ -84,6 +84,10 @@ func (bpt *BPlusTree) Size() int {
 	return size
 }
 
+func (bpt *BPlusTree) Close() error {
+	return bpt.tree.Close()
+}
+
 func (bpt *BPlusTree) Iterator(reverse bool) Iterator {
 	return newBptreeIterator(bpt.tree, reverse)
 }
@@ -145,5 +149,5 @@ func (bi *bptreeIterator) Value() *data.LogRecordPos {
 }
 
 func (bi *bptreeIterator) Close() {
-	_ = bi.tx.Commit()
+	_ = bi.tx.Rollback()
 }

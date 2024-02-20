@@ -72,6 +72,10 @@ func (b *BTree) Size() int {
 	return b.tree.Len()
 }
 
+func (b *BTree) Close() error {
+	return nil
+}
+
 // Btree 索引迭代器
 type btreeIterator struct {
 	currIndex int     // 当前位置

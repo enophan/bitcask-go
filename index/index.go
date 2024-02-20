@@ -15,6 +15,7 @@ type Indexer interface {
 
 	// Size 索引中的数据量
 	Size() int
+	Close() error // 专门给BPTree准备的
 }
 
 type Item struct {
@@ -27,17 +28,17 @@ type IndexType = int8
 const (
 	Btree IndexType = iota + 1
 	ART
-	BPTree // 暂时不打算开启此选项
+	BPTree
 )
 
-func NewIndexer(t IndexType) Indexer {
+func NewIndexer(t IndexType, dirPath string, sync bool) Indexer {
 	switch t {
 	case Btree:
 		return NewBtree()
 	case ART:
 		return NewART()
 	case BPTree:
-		return nil
+		return NewBPlusTree(dirPath, sync)
 	default:
 		panic("暂不支持该类型")
 	}
