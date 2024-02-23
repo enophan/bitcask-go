@@ -2,6 +2,7 @@ package bitcask_go
 
 import (
 	"bitcask/data"
+	"bitcask/fio"
 	"bitcask/index"
 	"errors"
 	"io"
@@ -11,11 +12,16 @@ import (
 	"strconv"
 	"strings"
 	"sync"
+
+	"github.com/gofrs/flock"
 )
 
 // 给用户提供的接口
 
-const SeqNoKey = "seq.no"
+const (
+	SeqNoKey     = "seq.no"
+	fileLockName = "flock"
+)
 
 type DB struct {
 	mu         *sync.RWMutex
@@ -36,8 +42,13 @@ type DB struct {
 	// 而之前用户没有调用DB.Close()方法关闭数据库的话，就没办法读取序列号，
 	// 此时使用WriteBatch功能就会出错，因此需要在DB.NewWriteBatch()时会判断这个属性，
 	// 以此决定是否禁用WriteBatch功能，避免错误产生
+	//
+	// isInitial 也同seqFileExists一样用于辅助B+树模式
 	seqFileExists bool
 	isInitial     bool
+
+	fileLock   *flock.Flock
+	bytesWrite int // 当前写入的字节数，辅助数据持久化做阈值判断
 }
 
 func Open(options Options) (*DB, error) {
@@ -64,12 +75,22 @@ func Open(options Options) (*DB, error) {
 		isInitial = true
 	}
 
+	fileLock := flock.New(filepath.Join(options.DirPath, fileLockName))
+	hold, err := fileLock.TryLock()
+	if err != nil {
+		return nil, err
+	}
+	if !hold {
+		return nil, ErrDatabaseIsUsing
+	}
+
 	db := &DB{
 		mu:         new(sync.RWMutex),
 		olderFiles: make(map[uint32]*data.DataFile),
 		options:    options,
 		index:      index.NewIndexer(options.IndexType, options.DirPath, options.SyncWrite),
 		isInitial:  isInitial,
+		fileLock:   fileLock,
 	}
 
 	// 加载merge文件
@@ -89,7 +110,11 @@ func Open(options Options) (*DB, error) {
 		if err := db.loadIndexFromDataFiles(); err != nil {
 			return nil, err
 		}
-
+		if db.options.MMapStartup {
+			if err := db.resetDataFileIOType(); err != nil {
+				return nil, err
+			}
+		}
 	}
 
 	if db.options.IndexType == BPlusTree {
@@ -224,8 +249,11 @@ func (db *DB) Sync() error {
 
 // Close 关闭数据库
 func (db *DB) Close() error {
-	// 关闭或与文件和旧数据文件
+	defer func() {
+		_ = db.fileLock.Unlock()
+	}()
 
+	// 关闭或与文件和旧数据文件
 	if db.activeFile == nil {
 		return nil
 	}
@@ -334,9 +362,18 @@ func (db *DB) appendLogRecord(logRecord *data.LogRecord) (*data.LogRecordPos, er
 		return nil, err
 	}
 
-	if db.options.SyncWrite {
+	db.bytesWrite += int(size)
+	var needSync = db.options.SyncWrite
+	if !needSync && db.options.BytesPerSync > 0 && db.bytesWrite >= db.options.BytesPerSync {
+		needSync = true
+	}
+
+	if needSync {
 		if err := db.activeFile.Sync(); err != nil {
 			return nil, err
+		}
+		if db.bytesWrite > 0 {
+			db.bytesWrite = 0
 		}
 	}
 
@@ -355,7 +392,7 @@ func (db *DB) setActiveFile() error {
 	}
 
 	// 打开数据文件
-	dataFile, err := data.OpenDataFile(db.options.DirPath, initFileId)
+	dataFile, err := data.OpenDataFile(db.options.DirPath, initFileId, fio.StandardFile)
 	if err != nil {
 		return err
 	}
@@ -391,7 +428,11 @@ func (db *DB) loadDataFiles() error {
 	db.fileIds = fileIds
 
 	for i, fid := range fileIds {
-		dataFile, err := data.OpenDataFile(db.options.DirPath, uint32(fid))
+		var ioType = fio.StandardFile
+		if db.options.MMapStartup {
+			ioType = fio.MemoryMap
+		}
+		dataFile, err := data.OpenDataFile(db.options.DirPath, uint32(fid), ioType)
 		if err != nil {
 			return nil
 		}
@@ -528,5 +569,33 @@ func checkOptions(o Options) error {
 		return errors.New("DataFileSize 配置错误")
 	}
 
+	return nil
+}
+
+func (db *DB) resetDataFileIOType() error {
+	// 先改活跃文件
+	// 再改旧数据文件
+	if db.activeFile == nil {
+		return nil
+	}
+	if err := db.activeFile.IOManager.Close(); err != nil {
+		return err
+	}
+	ioManager, err := fio.NewFileIOManager(data.GetDataFileName(db.options.DirPath, db.activeFile.FileId))
+	if err != nil {
+		return err
+	}
+	db.activeFile.IOManager = ioManager
+
+	for _, file := range db.olderFiles {
+		if err := file.IOManager.Close(); err != nil {
+			return err
+		}
+		ioManager, err := fio.NewFileIOManager(data.GetDataFileName(db.options.DirPath, file.FileId))
+		if err != nil {
+			return nil
+		}
+		file.IOManager = ioManager
+	}
 	return nil
 }

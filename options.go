@@ -6,7 +6,9 @@ type Options struct {
 	DirPath      string // 数据目录
 	DataFileSize int64
 	SyncWrite    bool      // 每次写入数据，持久化与否
+	BytesPerSync int       // 持久化数据阈值
 	IndexType    IndexType // 所采用的索引类型
+	MMapStartup  bool      // 使用内存文件映射与否
 }
 
 type IndexType = int8
@@ -36,6 +38,7 @@ var DefaultDBOptions = Options{
 	DataFileSize: 256 * 1024 * 1024,
 	SyncWrite:    false,
 	IndexType:    Btree,
+	MMapStartup:  true,
 }
 
 var DefaultIteratorOptions = IteratorOptions{

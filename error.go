@@ -9,4 +9,5 @@ var (
 	ErrDataFileNotFound  = errors.New("找不着数据文件")
 	ErrExceedMaxBatchNum = errors.New("提交数超出单批次最大量")
 	ErrMergeInProgress   = errors.New("当前正在merge")
+	ErrDatabaseIsUsing   = errors.New("数据库正被使用")
 )
